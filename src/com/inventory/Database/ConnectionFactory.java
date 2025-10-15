@@ -5,30 +5,21 @@
  */
 package com.inventory.Database;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.Properties;
 
 /**
  *
  * @author asjad
  */
 
-//Class to retrieve connection for database and login verfication.
+//Class to retrieve connection for database and login verification.
 public class ConnectionFactory {
 
-    static final String driver = "com.mysql.cj.jdbc.Driver";
-    static final String url = "jdbc:mysql://localhost:3306/inventory";
-    static String username;
-    static String password;
-
-    Properties prop;
+    // SQLite DB file will be created in ./data/inventorydb.sqlite
+    static final String url = "jdbc:sqlite:./data/inventorydb.sqlite";
 
     Connection conn = null;
     Statement statement = null;
@@ -36,19 +27,17 @@ public class ConnectionFactory {
 
     public ConnectionFactory(){
         try {
-            //Username and Password saved as configurable properties to allow changes without recompilation.
-            prop = new Properties();
-            prop.loadFromXML(new FileInputStream("lib/DBCredentials.xml"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        username = prop.getProperty("username");
-        password = prop.getProperty("password");
-
-        try {
-            Class.forName(driver);
-            conn = DriverManager.getConnection(url, username, password);
+            Class.forName("org.sqlite.JDBC");
+            conn = DriverManager.getConnection(url);
             statement = conn.createStatement();
+            
+            // Configure SQLite for better concurrency and performance
+            statement.execute("PRAGMA foreign_keys = ON;");
+            statement.execute("PRAGMA journal_mode = WAL;");  // Write-Ahead Logging for better concurrency
+            statement.execute("PRAGMA synchronous = NORMAL;"); // Better performance
+            statement.execute("PRAGMA busy_timeout = 30000;"); // 30 second timeout for locks
+            statement.execute("PRAGMA cache_size = 10000;"); // Larger cache
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -56,30 +45,77 @@ public class ConnectionFactory {
 
     public Connection getConn() {
         try {
-            Class.forName(driver);
-            conn = DriverManager.getConnection(url, username, password);
-            System.out.println("Connected successfully.");
+            if (conn == null || conn.isClosed()) {
+                Class.forName("org.sqlite.JDBC");
+                conn = DriverManager.getConnection(url);
+                statement = conn.createStatement();
+                
+                // Configure SQLite for better concurrency and performance
+                statement.execute("PRAGMA foreign_keys = ON;");
+                statement.execute("PRAGMA journal_mode = WAL;");
+                statement.execute("PRAGMA synchronous = NORMAL;");
+                statement.execute("PRAGMA busy_timeout = 30000;");
+                statement.execute("PRAGMA cache_size = 10000;");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return conn;
     }
+    
+    // Method to close connection properly
+    public void closeConnection() {
+        try {
+            if (resultSet != null && !resultSet.isClosed()) {
+                resultSet.close();
+            }
+            if (statement != null && !statement.isClosed()) {
+                statement.close();
+            }
+            if (conn != null && !conn.isClosed()) {
+                conn.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     //Login verification method
     public boolean checkLogin(String username, String password, String userType){
-        String query = "SELECT * FROM users WHERE username='"
-                + username
-                + "' AND password='"
-                + password
-                + "' AND usertype='"
-                + userType
-                + "' LIMIT 1";
-
+        String query = "SELECT * FROM users WHERE username=? AND password=? AND usertype=? LIMIT 1";
+        
+        Connection conn = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        
         try {
-            resultSet = statement.executeQuery(query);
-            if(resultSet.next()) return true;
+            conn = getConn();
+            // Use prepared statement to prevent SQL injection
+            java.sql.PreparedStatement pstmt = conn.prepareStatement(query);
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+            pstmt.setString(3, userType);
+            
+            resultSet = pstmt.executeQuery();
+            boolean loginSuccess = resultSet.next();
+            
+            // Clean up resources
+            resultSet.close();
+            pstmt.close();
+            
+            return loginSuccess;
+            
         } catch (Exception ex) {
             ex.printStackTrace();
+        } finally {
+            // Always close the connection
+            try {
+                if (conn != null && !conn.isClosed()) {
+                    conn.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return false;
     }

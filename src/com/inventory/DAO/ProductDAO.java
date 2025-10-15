@@ -29,14 +29,35 @@ public class ProductDAO {
     Statement statement2 = null;
     ResultSet resultSet = null;
 
+    ConnectionFactory connectionFactory;
+
     public ProductDAO() {
         try {
-            conn = new ConnectionFactory().getConn();
+            connectionFactory = new ConnectionFactory();
+            conn = connectionFactory.getConn();
             statement = conn.createStatement();
             statement2 = conn.createStatement();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+    
+    // Method to close connections properly
+    public void closeConnection() {
+        try {
+            if (connectionFactory != null) {
+                connectionFactory.closeConnection();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    // Finalize method to ensure connections are closed
+    @Override
+    protected void finalize() throws Throwable {
+        closeConnection();
+        super.finalize();
     }
 
     public ResultSet getSuppInfo() {

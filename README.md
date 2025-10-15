@@ -1,7 +1,7 @@
 # Inventory Management System
 
-This is an Inventory Management System built in the form of a GUI desktop application developed in ***Java*** using ***MySQL*** as its database.
-The GUI was designed using **Swing** and the database connectivity was managed using **JDBC API**.
+This is an Inventory Management System built in the form of a GUI desktop application developed in ***Java*** using ***SQLite*** as its database.
+The GUI was designed using **Swing** with **FlatLaf** modern theme and the database connectivity was managed using **JDBC API**.
 
 
 This application can be used by any small to mid-sized stores to easily maintain and manage an inventory of all their-
@@ -25,6 +25,30 @@ This application can be used by any small to mid-sized stores to easily maintain
 - Each section includes a search feature to make it easier for users to view the data they want to see.
 - Users only need to enter the product code while making a sale and all the relevant details will be retrieved from the database automatically.
 - Maintains a time log of all the users using the application.
+
+## Technology Stack
+
+- **Language:** Java
+- **Database:** SQLite (file-based, no server required)
+- **GUI Framework:** Swing with FlatLaf modern theme
+- **Database Connectivity:** JDBC API
+- **Build System:** Batch scripts (compile.bat, run.bat)
+
+## Quick Start
+
+1. **Compile:** Run `compile.bat`
+2. **Start:** Run `run.bat`
+3. **Login:** Use `root`/`root` (admin) or `emp1`/`emp1` (employee)
+
+## Project Structure
+
+See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed project layout.
+
+## Documentation
+
+- [HOW_TO_RUN.md](HOW_TO_RUN.md) - Detailed setup and usage instructions
+- [DATABASE_MIGRATION.md](DATABASE_MIGRATION.md) - MySQL to SQLite migration notes
+- [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) - Clean project organization
 
 ## How to download and run the software
 
